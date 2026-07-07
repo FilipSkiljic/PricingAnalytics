@@ -1,0 +1,14 @@
+# Build artefakti
+bin/
+obj/
+.vs/
+*.user
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Blagajnicki podaci - stvarni izvoz, ne ide u repozitorij.
+# Vidi README za upute kako namjestiti lokalno.
+data/*.csv
