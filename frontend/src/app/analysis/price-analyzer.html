@@ -1,0 +1,122 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Analitika cijena usluga</h1>
+    <p>Usporedite svoju cijenu s tržišnim korpusom blagajničkih podataka.</p>
+  </header>
+
+  <section class="card form-card">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field-row">
+        <div class="field">
+          <label for="service">Usluga</label>
+          <input
+            id="service"
+            type="text"
+            formControlName="service"
+            list="service-suggestions"
+            placeholder="npr. muško šišanje"
+            autocomplete="off"
+          />
+          <datalist id="service-suggestions">
+            @for (service of services(); track service.id) {
+              <option [value]="service.displayName"></option>
+            }
+          </datalist>
+        </div>
+
+        <div class="field field-price">
+          <label for="price">Cijena (€)</label>
+          <input id="price" type="number" formControlName="price" min="0" step="0.5" placeholder="10" />
+        </div>
+
+        <button type="submit" [disabled]="isLoading()">
+          {{ isLoading() ? 'Analiziram…' : 'Analiziraj' }}
+        </button>
+      </div>
+
+      @if (form.controls.service.touched && form.controls.service.invalid) {
+        <p class="field-error">Unesite naziv usluge.</p>
+      }
+      @if (form.controls.price.touched && form.controls.price.invalid) {
+        <p class="field-error">Unesite cijenu (nenegativan broj).</p>
+      }
+    </form>
+
+    @if (services().length > 0) {
+      <div class="suggestions">
+        <span class="suggestions-label">Dostupne usluge:</span>
+        @for (service of services(); track service.id) {
+          <button type="button" class="chip" (click)="useSuggestion(service.displayName)">
+            {{ service.displayName }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  @if (errorMessage(); as message) {
+    <section class="card error-card">{{ message }}</section>
+  }
+
+  @if (result(); as recommendation) {
+    <section class="card result-card">
+      <div class="verdict" [class]="verdictInfo()!.cssClass">
+        <div class="verdict-text">
+          <h2>{{ verdictInfo()!.title }}</h2>
+          <p>{{ verdictInfo()!.explanation }}</p>
+        </div>
+        <div class="verdict-price">
+          <span class="label">Vaša cijena</span>
+          <strong>{{ recommendation.userPrice | number: '1.2-2' }} €</strong>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Preporučeni raspon</span>
+          <span class="stat-value">
+            {{ recommendation.q1 | number: '1.2-2' }} – {{ recommendation.q3 | number: '1.2-2' }} €
+          </span>
+          <span class="stat-note">interkvartilni raspon (Q1–Q3)</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Medijan tržišta</span>
+          <span class="stat-value">{{ recommendation.median | number: '1.2-2' }} €</span>
+          <span class="stat-note">srednja cijena, otporna na ekstreme</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Vaša pozicija</span>
+          <span class="stat-value">{{ recommendation.percentileRank | number: '1.0-0' }}. percentil</span>
+          <span class="stat-note">
+            skuplji ste od {{ recommendation.percentileRank | number: '1.0-0' }}% obrta
+          </span>
+        </div>
+      </div>
+
+      <div class="percentile-bar">
+        <div class="percentile-track">
+          <div class="percentile-marker" [style.left.%]="recommendation.percentileRank"></div>
+        </div>
+        <div class="percentile-scale">
+          <span>najjeftiniji</span>
+          <span>najskuplji</span>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <h3>Distribucija cijena — {{ recommendation.canonicalServiceName }}</h3>
+        <app-distribution-chart
+          [distribution]="recommendation.distribution"
+          [userPrice]="recommendation.userPrice"
+        />
+        <p class="sample-note">
+          Uzorak: <strong>{{ recommendation.sampleSize }}</strong> unosa
+          @if (removedOutliers() > 0) {
+            <span>(uklonjeno {{ removedOutliers() }} ekstremnih vrijednosti od ukupno
+              {{ recommendation.sampleSizeBeforeOutlierRemoval }})</span>
+          }
+        </p>
+      </div>
+    </section>
+  }
+</div>
