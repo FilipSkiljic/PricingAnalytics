@@ -1,0 +1,109 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Moj cjenik</h1>
+      <p>Usluge koje nudite, usporedene s tržišnim cijenama.</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>Uvoz cjenika iz CSV-a</h2>
+    <p class="hint">
+      Datoteka treba imati stupce <code>Name</code> i <code>Price</code>. Uvoz zamjenjuje
+      postojeći cjenik u cijelosti.
+    </p>
+
+    <label class="file-button">
+      <input type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" [disabled]="isImporting()" />
+      @if (isImporting()) {
+        Uvoz u tijeku…
+      } @else {
+        Odaberi CSV datoteku
+      }
+    </label>
+
+    @if (importResult(); as result) {
+      <p class="import-result">
+        Uvezeno {{ result.imported }} usluga.
+        @if (result.skipped > 0) {
+          Preskočeno {{ result.skipped }} neispravnih redaka.
+        }
+      </p>
+    }
+  </section>
+
+  <section class="card">
+    <h2>Dodaj uslugu</h2>
+    <form [formGroup]="form" (ngSubmit)="addService()">
+      <div class="field-row">
+        <div class="field">
+          <label for="name">Naziv usluge</label>
+          <input id="name" type="text" formControlName="name" placeholder="npr. muško šišanje" />
+        </div>
+        <div class="field field-price">
+          <label for="price">Cijena (€)</label>
+          <input id="price" type="number" formControlName="price" min="0" step="0.5" />
+        </div>
+        <button type="submit" class="submit">Dodaj</button>
+      </div>
+    </form>
+  </section>
+
+  @if (errorMessage(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <section class="card">
+    <div class="table-header">
+      <h2>Usluge i tržišna procjena</h2>
+      @if (items().length > 0) {
+        <span class="hint">{{ analyzedCount() }} od {{ items().length }} usporedivo s tržištem</span>
+      }
+    </div>
+
+    @if (isLoading()) {
+      <p class="hint">Učitavanje…</p>
+    } @else if (items().length === 0) {
+      <p class="hint">Cjenik je prazan. Uvezite CSV ili dodajte uslugu ručno.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Usluga</th>
+              <th class="numeric">Vaša cijena</th>
+              <th>Procjena</th>
+              <th class="numeric">Medijan</th>
+              <th class="numeric">Preporučeni raspon</th>
+              <th class="numeric">Percentil</th>
+              <th class="numeric">Uzorak</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td>{{ item.name }}</td>
+                <td class="numeric">{{ item.price | number: '1.2-2' }} €</td>
+                @if (item.recommendation; as r) {
+                  <td>
+                    <span class="badge" [class]="verdictClass(r.verdict)">{{ verdictLabel(r.verdict) }}</span>
+                  </td>
+                  <td class="numeric">{{ r.median | number: '1.2-2' }} €</td>
+                  <td class="numeric">{{ r.q1 | number: '1.2-2' }} – {{ r.q3 | number: '1.2-2' }} €</td>
+                  <td class="numeric">{{ r.percentileRank | number: '1.0-0' }}.</td>
+                  <td class="numeric">{{ r.sampleSize }}</td>
+                } @else {
+                  <td colspan="5" class="hint">Nema usporedivih tržišnih podataka</td>
+                }
+                <td class="numeric">
+                  <button type="button" class="link-button danger" (click)="deleteService(item)">Obriši</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
