@@ -1,0 +1,26 @@
+<nav class="app-nav">
+  <div class="app-nav-inner">
+    <span class="brand">Analitika cijena</span>
+
+    <div class="links">
+      @if (isSignedIn()) {
+        @if (isAdmin()) {
+          <a routerLink="/admin/katalog" routerLinkActive="active">Katalog</a>
+          <a routerLink="/admin/sustav" routerLinkActive="active">Sustav</a>
+        } @else {
+          <a routerLink="/analiza" routerLinkActive="active">Analiza cijene</a>
+          <a routerLink="/cjenik" routerLinkActive="active">Moj cjenik</a>
+        }
+
+        <span class="account">
+          {{ businessName() }}
+          <button type="button" class="sign-out" (click)="signOut()">Odjava</button>
+        </span>
+      } @else {
+        <a routerLink="/prijava" routerLinkActive="active">Prijava</a>
+      }
+    </div>
+  </div>
+</nav>
+
+<router-outlet />
