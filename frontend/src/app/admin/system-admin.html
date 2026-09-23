@@ -1,0 +1,118 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Sustav</h1>
+    <p>Pregled stanja sustava, registriranih obrta i upravljanje tržišnim korpusom.</p>
+  </header>
+
+  @if (errorMessage(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+  @if (successMessage(); as message) {
+    <p class="success" role="status">{{ message }}</p>
+  }
+
+  <!-- ---------- statistika ---------- -->
+  @if (statistics(); as s) {
+    <section class="stats">
+      <div class="stat">
+        <span class="stat-value">{{ s.corpusEntries | number }}</span>
+        <span class="stat-label">unosa u korpusu</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ s.matchedEntries | number }}</span>
+        <span class="stat-label">sparenih unosa</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ s.coveragePercent | number: '1.1-1' }} %</span>
+        <span class="stat-label">pokrivenost korpusa</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ s.catalogServices }}</span>
+        <span class="stat-label">usluga u katalogu</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ s.registeredBusinesses }}</span>
+        <span class="stat-label">registriranih obrta</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Pokrivenost korpusa</h2>
+      <div class="coverage-track">
+        <div class="coverage-fill" [style.width.%]="s.coveragePercent"></div>
+      </div>
+      <p class="hint">
+        {{ s.matchedEntries | number }} od {{ s.corpusEntries | number }} unosa je svrstano u
+        neku uslugu. Nespareni unosi su većinom kombinacije usluga koje se namjerno ne
+        uspoređuju s osnovnom uslugom.
+      </p>
+    </section>
+  }
+
+  <!-- ---------- uvoz korpusa ---------- -->
+  <section class="card">
+    <h2>Uvoz tržišnog korpusa</h2>
+    <p class="hint">
+      Datoteka treba imati stupce <code>Name</code> i <code>Price</code>.
+      <strong>Uvoz zamjenjuje cijeli korpus</strong> i time mijenja svu statistiku u sustavu.
+    </p>
+
+    <label class="file-button">
+      <input type="file" accept=".csv,text/csv" (change)="onCorpusFileSelected($event)" [disabled]="isImporting()" />
+      @if (isImporting()) {
+        Uvoz u tijeku…
+      } @else {
+        Odaberi CSV datoteku
+      }
+    </label>
+  </section>
+
+  <!-- ---------- obrti ---------- -->
+  <section class="card">
+    <div class="table-header">
+      <h2>Registrirani obrti</h2>
+      <span class="hint">{{ businesses().length }} računa</span>
+    </div>
+
+    @if (businesses().length === 0) {
+      <p class="hint">Nema registriranih obrta.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Obrt</th>
+              <th>E-mail</th>
+              <th>Uloga</th>
+              <th class="numeric">Usluga u cjeniku</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (business of businesses(); track business.id) {
+              <tr>
+                <td>{{ business.name }}</td>
+                <td>{{ business.email }}</td>
+                <td>
+                  <span class="badge" [class.badge-admin]="business.role === 'Admin'">
+                    {{ business.role === 'Admin' ? 'Administrator' : 'Korisnik' }}
+                  </span>
+                </td>
+                <td class="numeric">{{ business.serviceCount }}</td>
+                <td class="numeric">
+                  @if (business.id !== ownId) {
+                    <button type="button" class="link-button danger" (click)="deleteBusiness(business)">
+                      Obriši
+                    </button>
+                  } @else {
+                    <span class="hint">vaš račun</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

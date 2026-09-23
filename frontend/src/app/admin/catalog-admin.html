@@ -1,0 +1,274 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Katalog usluga</h1>
+    <p>
+      Pravila po kojima se nazivi iz tržišnog korpusa svrstavaju u usluge.
+      Izmjena pravila mijenja analizu za sve korisnike.
+    </p>
+  </header>
+
+  @if (errorMessage(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+  @if (successMessage(); as message) {
+    <p class="success" role="status">{{ message }}</p>
+  }
+
+  <!-- ---------- forma za pravilo ---------- -->
+  <section class="card">
+    <h2>{{ isEditing() ? 'Izmjena usluge' : 'Nova usluga' }}</h2>
+    <p class="hint">
+      Naziv se spaja s uslugom ako sadrži <strong>sve</strong> tražene riječi i
+      <strong>nijednu</strong> zabranjenu. Zabranjene riječi odvojite zarezom.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="field-row">
+        <div class="field">
+          <label for="slug">Oznaka</label>
+          <input id="slug" type="text" formControlName="slug" placeholder="musko-sisanje" />
+          @if (isEditing()) {
+            <small class="field-note">Oznaka se ne mijenja.</small>
+          }
+        </div>
+        <div class="field">
+          <label for="displayName">Naziv za prikaz</label>
+          <input id="displayName" type="text" formControlName="displayName" placeholder="Muško šišanje" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="requiredPhrase">Tražene riječi</label>
+          <input id="requiredPhrase" type="text" formControlName="requiredPhrase" placeholder="muško šišanje" />
+        </div>
+        <div class="field">
+          <label for="excludedWords">Zabranjene riječi</label>
+          <input id="excludedWords" type="text" formControlName="excludedWords" placeholder="pranje, feniranje" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="secondary" (click)="runPreview()" [disabled]="isPreviewing()">
+          {{ isPreviewing() ? 'Provjeravam…' : 'Provjeri učinak' }}
+        </button>
+        <button type="submit" class="primary">
+          {{ isEditing() ? 'Spremi izmjene' : 'Dodaj uslugu' }}
+        </button>
+        @if (isEditing()) {
+          <button type="button" class="link-button" (click)="cancelEdit()">Odustani</button>
+        }
+      </div>
+    </form>
+
+    @if (preview(); as p) {
+      <div class="preview">
+        <h3>Učinak pravila</h3>
+        <div class="preview-numbers">
+          <div class="preview-stat">
+            <span class="preview-value">{{ p.wouldMatchTotal }}</span>
+            <span class="preview-label">ukupno bi obuhvatilo</span>
+          </div>
+          <div class="preview-stat">
+            <span class="preview-value" [class.gain]="p.currentlyUnmatched > 0">
+              +{{ p.currentlyUnmatched }}
+            </span>
+            <span class="preview-label">novih (sada nespareni)</span>
+          </div>
+          @if (isEditing()) {
+            <div class="preview-stat">
+              <span class="preview-value">{{ p.alreadyOwned }}</span>
+              <span class="preview-label">već ima ovo pravilo</span>
+            </div>
+          }
+          <div class="preview-stat">
+            <span class="preview-value" [class.warn]="p.takenFromOtherServices > 0">
+              {{ p.takenFromOtherServices }}
+            </span>
+            <span class="preview-label">preuzeto od drugih usluga</span>
+          </div>
+        </div>
+
+        @if (p.wouldMatchTotal === 0) {
+          <p class="warning">
+            Pravilo ne bi obuhvatilo nijedan unos. Provjerite tražene riječi — možda već
+            postoji usluga s istim riječima, ili se te riječi ne pojavljuju u korpusu.
+          </p>
+        } @else if (p.takenFromOtherServices > 0) {
+          <p class="warning">
+            Pravilo bi preuzelo unose od: <strong>{{ p.affectedServices.join(', ') }}</strong>.
+            Statistika tih usluga će se promijeniti.
+          </p>
+        } @else if (isEditing() && p.currentlyUnmatched === 0) {
+          <p class="neutral">
+            Pravilo obuhvaća točno one unose koje već ima — ništa se ne bi promijenilo.
+          </p>
+        }
+
+        @if (p.sampleNames.length > 0) {
+          <p class="hint">
+            Primjeri naziva koje pravilo obuhvaća
+            <span class="hint-note">(ovi unosi ulaze u uzorak iz kojeg se računa cijena)</span>
+          </p>
+          <ul class="samples">
+            @for (name of p.sampleNames; track name) {
+              <li>{{ name }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ---------- popis usluga ---------- -->
+  <section class="card">
+    <div class="table-header">
+      <h2>Usluge u katalogu</h2>
+      <span class="hint">{{ catalog().length }} usluga, {{ totalMatched() | number }} sparenih unosa</span>
+    </div>
+
+    @if (isLoading()) {
+      <p class="hint">Učitavanje…</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Naziv</th>
+              <th>Tražene riječi</th>
+              <th>Zabranjene riječi</th>
+              <th class="numeric">Unosa</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of catalog(); track entry.id) {
+              <tr [class.editing]="entry.id === editingId()">
+                <td>
+                  {{ entry.displayName }}
+                  <small class="slug">{{ entry.slug }}</small>
+                </td>
+                <td><code>{{ entry.requiredPhrase }}</code></td>
+                <td>
+                  @if (entry.excludedWords) {
+                    <code>{{ entry.excludedWords }}</code>
+                  } @else {
+                    <span class="hint">—</span>
+                  }
+                </td>
+                <td class="numeric">{{ entry.matchedEntries | number }}</td>
+                <td class="numeric actions-cell">
+                  <button type="button" class="link-button" (click)="startEdit(entry)">Uredi</button>
+                  <button type="button" class="link-button danger" (click)="remove(entry)">Obriši</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- ---------- test sparivanja ---------- -->
+  <section class="card">
+    <h2>Provjera naziva</h2>
+    <p class="hint">Upišite naziv iz korpusa da vidite s kojom se uslugom spaja i zašto.</p>
+
+    <form [formGroup]="testForm" (ngSubmit)="runTest()">
+      <div class="field-row">
+        <div class="field wide">
+          <input type="text" formControlName="name" placeholder="npr. Muško šišanje i pranje" />
+        </div>
+        <button type="submit" class="primary">Provjeri</button>
+      </div>
+    </form>
+
+    @if (explanation(); as e) {
+      <div class="explanation">
+        <p class="tokens">
+          Normalizirane riječi:
+          @for (token of e.normalizedTokens; track token) {
+            <code>{{ token }}</code>
+          }
+        </p>
+
+        @if (e.winner; as w) {
+          <p class="verdict matched">Spaja se s: <strong>{{ w.displayName }}</strong></p>
+        } @else {
+          <p class="verdict unmatched">Ne spaja se ni s jednom uslugom.</p>
+        }
+
+        @if (relevantCandidates(e).length > 0) {
+          <table class="candidates">
+            <thead>
+              <tr>
+                <th>Usluga</th>
+                <th>Nedostaje</th>
+                <th>Blokira</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (candidate of relevantCandidates(e); track candidate.slug) {
+                <tr>
+                  <td>{{ candidate.displayName }}</td>
+                  <td>
+                    @for (token of candidate.missingTokens; track token) {
+                      <code class="missing">{{ token }}</code>
+                    }
+                    @if (candidate.missingTokens.length === 0) {
+                      <span class="hint">—</span>
+                    }
+                  </td>
+                  <td>
+                    @for (token of candidate.blockingTokens; track token) {
+                      <code class="blocking">{{ token }}</code>
+                    }
+                    @if (candidate.blockingTokens.length === 0) {
+                      <span class="hint">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ---------- nespareni nazivi ---------- -->
+  <section class="card">
+    <div class="table-header">
+      <h2>Nespareni nazivi</h2>
+      <span class="hint">Najčešći nazivi koje nijedno pravilo ne obuhvaća</span>
+    </div>
+
+    @if (unmatched().length === 0) {
+      <p class="hint">Nema nesparenih naziva.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Naziv</th>
+              <th class="numeric">Pojavljivanja</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of unmatched(); track item.name) {
+              <tr>
+                <td>{{ item.name }}</td>
+                <td class="numeric">{{ item.occurrences }}</td>
+                <td class="numeric actions-cell">
+                  <button type="button" class="link-button" (click)="testUnmatched(item.name)">Zašto?</button>
+                  <button type="button" class="link-button" (click)="draftRuleFrom(item.name)">Napravi pravilo</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
