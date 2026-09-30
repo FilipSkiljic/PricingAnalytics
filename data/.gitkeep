@@ -1,0 +1,11 @@
+# Ovdje ide prices.csv - trzisni korpus.
+#
+# Datoteka nije u repozitoriju jer sadrzi stvarne blagajnicke podatke.
+# Ocekivana struktura:
+#
+#   "Name","Price"
+#   "Musko sisanje","10.00"
+#   "Zensko sisanje","14.00"
+#
+# Bez nje se aplikacija pokrece normalno, ali tablica MarketEntries ostaje
+# prazna pa analiza nema s cim usporediti cijenu. Vidi README.

@@ -65,18 +65,37 @@ analiza nema s čim usporediti unesenu cijenu.
 
 ## Pokretanje
 
+Prvo dohvatiti ovisnosti frontenda:
+
+```bash
+cd frontend && npm install
+```
+
 Baza se kreira i puni automatski pri prvom pokretanju API-ja u Development modu (migracije se
 primjenjuju, korpus se učitava iz CSV-a; ponovna pokretanja ne diraju već napunjenu bazu).
 
-Dva terminala:
+Zatim dva terminala:
 
 ```bash
-# 1. Backend - http://localhost:5049, Scalar na /scalar
+# 1. Backend - iz korijena projekta. http://localhost:5049, Scalar na /scalar
 dotnet run --project src/PricingAnalytics.Api
 
-# 2. Frontend - http://localhost:4200
+# 2. Frontend - iz frontend/ foldera. http://localhost:4200
 cd frontend && npx ng serve
 ```
+
+## Administratorski račun
+
+Registracija uvijek stvara običan korisnički račun - nema načina da se netko sam registrira
+kao administrator. Prvi administrator postavlja se izravno u bazi, nakon što je račun
+registriran kroz sučelje:
+
+```sql
+UPDATE Businesses SET Role = 'Admin' WHERE Email = 'vas@email.hr';
+```
+
+Administrator održava katalog usluga i tržišni korpus, dok obrt upravlja vlastitim cjenikom.
+Sučelja su odvojena, pa administrator ne vidi cjenik ni analizu cijene.
 
 ## Inspekcija korpusa
 
