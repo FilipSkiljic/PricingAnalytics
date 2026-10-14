@@ -12,3 +12,6 @@ frontend/.angular/
 # Blagajnicki podaci - stvarni izvoz, ne ide u repozitorij.
 # Vidi README za upute kako namjestiti lokalno.
 data/*.csv
+
+# Snimke VSCode ekstenzije Local History
+.history/

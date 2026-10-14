@@ -24,13 +24,9 @@
       </button>
     </div>
 
-    <p class="lead">
-      @if (mode() === 'login') {
-        Prijavite se da vidite svoj cjenik usporeden s tržištem.
-      } @else {
-        Otvorite račun za svoj obrt i učitajte vlastiti cjenik.
-      }
-    </p>
+    @if (mode() === 'register') {
+      <p class="lead">Otvorite račun za svoj obrt i učitajte vlastiti cjenik.</p>
+    }
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       @if (mode() === 'register') {
