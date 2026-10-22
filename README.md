@@ -24,7 +24,7 @@ ogradama (1,5 × IQR) prije računanja.
 | ORM | Entity Framework Core |
 | Baza | SQL Server Express |
 | Autentikacija | JWT (HMAC-SHA256), BCrypt |
-| API dokumentacija | Scalar (OpenAPI) |
+| API dokumentacija | Swagger UI (OpenAPI) |
 
 ## Struktura
 
@@ -77,7 +77,7 @@ primjenjuju, korpus se učitava iz CSV-a; ponovna pokretanja ne diraju već napu
 Zatim dva terminala:
 
 ```bash
-# 1. Backend - iz korijena projekta. http://localhost:5049, Scalar na /scalar
+# 1. Backend - iz korijena projekta. http://localhost:5049, Swagger na /swagger
 dotnet run --project src/PricingAnalytics.Api
 
 # 2. Frontend - iz frontend/ foldera. http://localhost:4200

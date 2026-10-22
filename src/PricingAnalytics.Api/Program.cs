@@ -8,7 +8,6 @@ using PricingAnalytics.Application.Services;
 using PricingAnalytics.Infrastructure.Csv;
 using PricingAnalytics.Infrastructure.Persistence;
 using PricingAnalytics.Infrastructure.Security;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +77,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "PricingAnalytics API v1");
+    });
 
     // Dev convenience: apply pending migrations and seed the market corpus from the
     // CSV export on startup so `dotnet run` gives a working /analyze endpoint immediately.
